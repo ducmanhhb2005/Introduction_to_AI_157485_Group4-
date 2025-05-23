@@ -1,4 +1,4 @@
-from const import FOOD, EMPTY, WALL
+from Overall.constants import FOOD, EMPTY, WALL
 
 DDX = [[0, 1], [0, -1], [1, 0], [-1, 0]]
 

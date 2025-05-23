@@ -4,7 +4,7 @@ import pygame
 # Giả sử constants.py nằm trong thư mục Source/,
 # và Food.py nằm trong Source/Object/
 try:
-    from Overall.const import WHITE, SIZE_WALL, MARGIN, YELLOW # Thêm YELLOW nếu chưa có
+    from Overall.constants import WHITE, SIZE_WALL, MARGIN, YELLOW # Thêm YELLOW nếu chưa có
 except ImportError:
     print("Cảnh báo (Food.py): Không thể import constants.py. Sử dụng giá trị mặc định.")
     WHITE = (255, 255, 255)

@@ -8,7 +8,7 @@ try:
     # Giả định constants.py và Object/ nằm trong thư mục Source/
     # và PacmanEnv.py nằm trong Source/Environments/
     # Khi train_agent.py đã thêm Source/ vào sys.path, các import này sẽ hoạt động
-    from Overall.const import (EMPTY, WALL, FOOD, MONSTER, SIZE_WALL, YELLOW, BLUE,
+    from Overall.constants import (EMPTY, WALL, FOOD, MONSTER, SIZE_WALL, YELLOW, BLUE,
                            IMAGE_PACMAN, IMAGE_GHOST, MARGIN, BLACK, WHITE, RED,
                            WIDTH as SCREEN_WIDTH, HEIGHT as SCREEN_HEIGHT)
     from Object.Player import Player

@@ -26,7 +26,7 @@ if project_root_dir not in sys.path:
 try:
     from Environments.pacman_env import PacmanEnv
     from SearchAlgorithms.DRL.dqn_agent import DQNAgent
-    from Overall.const import WIDTH, HEIGHT # Import kích thước màn hình từ constants.py
+    from Overall.constants import WIDTH, HEIGHT # Import kích thước màn hình từ constants.py
 except ImportError as e:
     print(f"Lỗi import trong train_agent.py: {e}")
     print(f"Kiểm tra lại cấu trúc thư mục và sys.path. sys.path hiện tại: {sys.path}")

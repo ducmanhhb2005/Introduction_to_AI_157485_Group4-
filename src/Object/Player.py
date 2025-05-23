@@ -3,7 +3,7 @@ import pygame
 import os
 
 try:
-    from Overall.const import SIZE_WALL, MARGIN
+    from Overall.constants import SIZE_WALL, MARGIN
 except ImportError:
     print("Cảnh báo (Player.py): Không thể import constants.py. Sử dụng giá trị mặc định.")
     SIZE_WALL = 30
