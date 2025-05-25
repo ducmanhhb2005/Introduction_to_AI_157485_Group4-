@@ -28,3 +28,25 @@ def find_nearest_food(_food_Position: list[list[int]], start_row: int, start_col
             [food_row, food_col] = _food_Position[idx]
 
     return [food_row, food_col, _id]
+
+class Counter(dict):
+    def normalize(self):
+        total = sum(self.values())
+        if total == 0:
+            return
+        for key in self:
+            self[key] /= total
+              # Debugging line to check normalization 
+    def choosefromdistribution(self):   
+        import random
+
+        r = random.random()
+        upto = 0.0
+        for key in self:
+            if upto + self[key] >= r:
+                return key
+            upto += self[key]
+
+    def __missing__(self, key):
+        self[key] = 0
+        return 0

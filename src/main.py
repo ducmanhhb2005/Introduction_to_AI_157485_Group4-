@@ -3,7 +3,7 @@ import sys
 import pygame
 import random
 
-from SearchAlgorithms.Ghost_Move import Ghost_move_level4
+from SearchAlgorithms.Ghost_Move import *
 from SearchAlgorithms.SearchAgent import SearchAgent
 from Object.Food import Food
 from Object.Player import Player
@@ -79,6 +79,9 @@ def check_Object(_map, row, col):
         _ghost.append(Player(row, col, IMAGE_GHOST[len(_ghost) % len(IMAGE_GHOST)]))
         _ghost_Position.append([row, col])
 
+old_direction = []
+for i in range(4):
+    old_direction.append('none')  # Initialize old_direction for each ghost
 
 def initData() -> None:
     global N, M, _map, _food_Position, _food, _road, _wall, _ghost, _visited, Score, _state_PacMan, _ghost_Position
@@ -115,7 +118,7 @@ def Draw(_screen) -> None:
     screen.blit(text_surface, (0, 0))
 
 
-# 1: Random, 2: A*
+# 1: Random, 2: Directional and Random
 def generate_Ghost_new_position(_ghost, _type: int = 0) -> list[list[int]]:
     _ghost_new_position = []
     if _type == 1:
@@ -132,11 +135,36 @@ def generate_Ghost_new_position(_ghost, _type: int = 0) -> list[list[int]]:
 
     # update latest
     elif _type == 2:
-        for idx in range(len(_ghost)):
-            [start_row, start_col] = _ghost[idx].getRC()
-            [end_row, end_col] = PacMan.getRC()
-            _ghost_new_position.append(Ghost_move_level4(_map, start_row, start_col, end_row, end_col, N, M))
 
+        for idx in range(len(_ghost)):
+            if idx % 2 == 0:
+                Ghost = RandomGhost()
+                [start_row, start_col] = _ghost[idx].getRC()
+                [end_row, end_col] = PacMan.getRC()
+                [r_r, r_c] = Ghost.move(_map, start_row, start_col, old_direction[idx], N, M)
+                if( [r_r - start_row, r_c - start_col] ) == [0,1]:
+                    old_direction[idx] = 'UP'
+                elif( [r_r - start_row, r_c - start_col] ) == [0,-1]:
+                    old_direction[idx] = 'DOWN' 
+                elif( [r_r - start_row, r_c - start_col] ) == [1,0]:
+                    old_direction[idx] = 'RIGHT'
+                elif( [r_r - start_row, r_c - start_col] ) == [-1,0]:
+                    old_direction[idx] = 'LEFT'
+                _ghost_new_position.append([r_r, r_c])
+            else:
+                Ghost = DirectionalGhost()
+                [start_row, start_col] = _ghost[idx].getRC()
+                [end_row, end_col] = PacMan.getRC()
+                [r_r, r_c] = Ghost.move(_map, start_row, start_col, end_row, end_col, old_direction[idx], N, M)
+                if( [r_r - start_row, r_c - start_col] ) == [0,1]:
+                    old_direction[idx] = 'UP'
+                elif( [r_r - start_row, r_c - start_col] ) == [0,-1]:
+                    old_direction[idx] = 'DOWN' 
+                elif( [r_r - start_row, r_c - start_col] ) == [1,0]:
+                    old_direction[idx] = 'RIGHT'
+                elif( [r_r - start_row, r_c - start_col] ) == [-1,0]:
+                    old_direction[idx] = 'LEFT'
+                _ghost_new_position.append([r_r, r_c])
     return _ghost_new_position
 
 
@@ -271,13 +299,7 @@ def startGame() -> None:
                 if timer >= SIZE_WALL:
                     is_moving = False
             else:
-                # _type = [0:don't move(default), 1:Random, 2:A*]
-                if Level == 3:
-                    _ghost_new_position = generate_Ghost_new_position(_ghost, _type=1)
-                elif Level == 4:
-                    _ghost_new_position = generate_Ghost_new_position(_ghost, _type=2)
-                else:
-                    _ghost_new_position = generate_Ghost_new_position(_ghost, _type=0)
+                _ghost_new_position = generate_Ghost_new_position(_ghost, _type=2)
 
                 is_moving = True
                 timer = 0

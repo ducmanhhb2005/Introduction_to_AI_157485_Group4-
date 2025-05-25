@@ -1,7 +1,22 @@
 from queue import PriorityQueue
 
-from Overall.utils import Manhattan, DDX, isValid2
+from Overall.utils import *
 
+Direction = {
+    'UP': [0, 1],  
+    'DOWN': [0, -1],        
+    'LEFT': [-1, 0],
+    'RIGHT': [1, 0],    
+}
+
+def reverse_direction(direction):
+    reverse_map = {
+        'UP': 'DOWN',
+        'DOWN': 'UP',
+        'LEFT': 'RIGHT',
+        'RIGHT': 'LEFT'
+    }
+    return reverse_map.get(direction, None)
 
 def Ghost_move_level4(_map, start_row, start_col, end_row, end_col, N, M):
     visited = [[False for _ in range(M)] for _ in range(N)]
@@ -36,3 +51,58 @@ def Ghost_move_level4(_map, start_row, start_col, end_row, end_col, N, M):
                 trace[group] = current
 
     return [start_row, start_col]
+
+class RandomGhost:
+    def __init__(self):
+        self.counter = Counter()
+    def move(self, _map, start_row, start_col, old_direction, N, M):
+        moves = []
+    
+        for key, next in Direction.items():
+            d_r, d_c = next
+            new_row, new_col = start_row + d_r, start_col + d_c
+            if isValid2(_map, new_row, new_col, N, M) :
+                moves.append(key)  
+        if not moves:
+            return [start_row, start_col]
+        
+        for i in moves:
+            self.counter[i] += 1
+        if old_direction is not None and len(moves) > 1:
+            reverse = reverse_direction(old_direction)
+            self.counter[reverse] = 0
+        self.counter.normalize()
+        idx = self.counter.choosefromdistribution()
+        [next_row, next_col] = start_row + Direction[idx][0], start_col + Direction[idx][1]
+        return [next_row, next_col] if idx is not None else [start_row, start_col]
+
+class DirectionalGhost:
+    def __init__(self):
+        self.counter = Counter()
+
+    def move(self, _map, start_row, start_col, pac_row, pac_col, old_direction, N, M):
+        proBest = 0.8
+        moves = []
+
+        for key, next in Direction.items():
+            d_r, d_c = next
+            new_row, new_col = start_row + d_r, start_col + d_c
+            if isValid2(_map, new_row, new_col, N, M):
+                moves.append(key)  
+        if not moves:
+            return [start_row, start_col]
+        distances = [Manhattan(start_row + Direction[move][0], start_col + Direction[move][1], pac_row, pac_col) for move in moves]
+        min_distance = min(distances)
+        bestActions = [moves[i] for i in range(len(moves)) if distances[i] == min_distance]
+        legal_moves = [moves[i] for i in range(len(moves)) if distances[i] != min_distance]
+        for i in legal_moves:
+            self.counter[i] += (1 - proBest) / len(legal_moves)
+        for i in bestActions:
+            self.counter[i] += proBest / len(bestActions)
+        if old_direction is not None and len(moves) > 1:
+            reverse = reverse_direction(old_direction)
+            self.counter[reverse] = 0
+        self.counter.normalize()
+        idx = self.counter.choosefromdistribution()
+        [next_row, next_col] = start_row + Direction[idx][0], start_col + Direction[idx][1]
+        return [next_row, next_col] if idx is not None else [start_row, start_col]  
