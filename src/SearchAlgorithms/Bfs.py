@@ -1,11 +1,12 @@
 from Overall.utils import DDX, isValid, FOOD
 
-def Bfs(_map, start_row, start_col, N, M):
+def Bfs(_map, prev_row, prev_col, start_row, start_col, N, M):
     visited = [[False for _ in range(M)] for _ in range(N)]
     trace = [[[-1, -1] for _ in range(M)] for _ in range(N)]
 
     lt = []
     visited[start_row][start_col] = True
+    visited[prev_row][prev_col] = True
     lt.append([start_row, start_col])
 
     chk = False

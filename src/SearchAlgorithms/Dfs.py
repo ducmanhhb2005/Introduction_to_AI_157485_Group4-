@@ -22,9 +22,10 @@ def depth_first_search_recursive(_map, row, col, N, M, visited, trace):
     return 0
 
 
-def Dfs(_map, start_row, start_col, N, M):
+def Dfs(_map, prev_row, prev_col, start_row, start_col, N, M):
     visited = [[False for _ in range(M)] for _ in range(N)]
     trace = []
+    visited[prev_row][prev_col] = 1
 
     res = depth_first_search_recursive(_map, start_row, start_col, N, M, visited, trace)
 

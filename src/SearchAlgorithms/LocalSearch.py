@@ -1,76 +1,92 @@
-from Overall.utils import DDX, isValid2
-from Overall.constants import FOOD, MONSTER, WALL
+from Overall.utils import DDX, isValid2, Manhattan
+from Overall.constants import FOOD, MONSTER, WALL, EMPTY
+import random
 
+MONSTER_POINT = [-100, -300, -500, -1000, -1e8]
+FOOD_POINT = [5, 20, 50, 100, 200]
 
-def update_heuristic(_map, start_row, start_col, current_row, current_col, N, M, depth, visited, _type, cost):
-    visited.append((current_row, current_col))
-
-    if depth < 0:
-        return
-    if (start_row, start_col) == (current_row, current_col):
-        return
-
-    point = 0
+def point(depth, _type):
     if _type == FOOD:
-        if depth == 2:
-            point = 35
-        if depth == 1:
-            point = 10
-        if depth == 0:
-            point = 5
+        return FOOD_POINT[depth]
 
     elif _type == MONSTER:
-        if depth == 2:
-            point = float("-inf")
-        if depth == 1:
-            point = float("-inf")
-        if depth == 0:
-            point = -100
+        return MONSTER_POINT[depth]
 
-    cost[current_row][current_col] += point
+def update_heuristic(_map, pacman_row, pacman_col, current_row, current_col, N, M, depth, _type, cost):
+    visited = [[False for _ in range(M)] for _ in range(N)]
+    
+    visited[current_row][current_col] = True
+    q = [[current_row, current_col, depth]]
+    cost[current_row][current_col] += point(depth, _type)
 
-    for [d_r, d_c] in DDX:
-        new_row, new_col = current_row + d_r, current_col + d_c
-        if isValid2(_map, new_row, new_col, N, M) and (new_row, new_col) not in visited:
-            update_heuristic(_map, start_row, start_col, new_row, new_col, N, M, depth - 1, visited.copy(), _type, cost)
+    while len(q) > 0:
+        [row, col, d] = q.pop(0)
+        new_depth = d - 1
 
+        if new_depth < 0:
+            break
 
-def calc_heuristic(_map, start_row, start_col, current_row, current_col, N, M, depth, visited, cost, _visited):
-    visited.append((current_row, current_col))
-
-    if depth <= 0:
-        return
-
-    for [d_r, d_c] in DDX:
-        new_row, new_col = current_row + d_r, current_col + d_c
-        if isValid2(_map, new_row, new_col, N, M) and (new_row, new_col) not in visited:
-
-            sub_visited = []
-            if _map[new_row][new_col] == FOOD:
-                update_heuristic(_map, start_row, start_col, new_row, new_col, N, M, 2, sub_visited, FOOD, cost)
-            elif _map[new_row][new_col] == MONSTER:
-                update_heuristic(_map, start_row, start_col, new_row, new_col, N, M, 2, sub_visited, MONSTER,
-                                 cost)
-
-            calc_heuristic(_map, start_row, start_col, new_row, new_col, N, M, depth - 1, visited.copy(), cost,
-                           _visited)
-
-    cost[current_row][current_col] -= _visited[current_row][current_col]
+        for [d_r, d_c] in DDX:
+            new_row, new_col = row + d_r, col + d_c
+            if isValid2(_map, new_row, new_col, N, M) and not visited[new_row][new_col] and Manhattan(pacman_row, pacman_col, new_row, new_col) <= depth:
+                cost[new_row][new_col] += point(new_depth, _type)
+                print(f"{current_row} {current_col}: {new_row} {new_col} point: {point(new_depth, _type)} sum: {cost[new_row][new_col]}")
+                visited[new_row][new_col] = True
+                q.append([new_row, new_col, new_depth])
 
 
-def local_search(_map, start_row, start_col, N, M, _visited):
-    visited = []
+
+
+def calc_heuristic(_map, start_row, start_col, N, M, depth, cost):
+    visited = [[False for _ in range(M)] for _ in range(N)]
+    
+    visited[start_row][start_col] = True
+    q = [[start_row, start_col, depth]]
+
+    while len(q) > 0:
+        [row, col, d] = q.pop(0)
+        new_depth = d - 1
+
+        if new_depth < 0:
+            break
+
+        for [d_r, d_c] in DDX:
+            new_row, new_col = row + d_r, col + d_c
+            if isValid2(_map, new_row, new_col, N, M) and not visited[new_row][new_col]:
+                if _map[new_row][new_col] != EMPTY:
+                    update_heuristic(_map, start_row, start_col, new_row, new_col, N, M, depth - 1, _map[new_row][new_col], cost)
+                visited[new_row][new_col] = True
+                q.append([new_row, new_col, new_depth])
+
+
+
+def local_search(_map, prev_row, prev_col, start_row, start_col, N, M, _visited):
     cost = [[0 for _ in range(M)] for _ in range(N)]
 
-    calc_heuristic(_map, start_row, start_col, start_row, start_col, N, M, 3, visited, cost, _visited)
+    calc_heuristic(_map, start_row, start_col, N, M, 5, cost)
 
-    max_f = float("-inf")
+    max_f = -1e9
 
     result = []
     for [d_r, d_c] in DDX:
         new_row, new_col = start_row + d_r, start_col + d_c
-        if cost[new_row][new_col] - _visited[new_row][new_col] > max_f and _map[new_row][new_col] != WALL:
+        print(new_row, new_col, cost[new_row][new_col])
+        if isValid2(_map, new_row, new_col, N, M) and cost[new_row][new_col] - _visited[new_row][new_col] >= max_f and _map[new_row][new_col] != WALL:
+            if cost[new_row][new_col] - _visited[new_row][new_col] == max_f:
+                result.append([new_row, new_col])
+            else:
+                result.clear();
+                result.append([new_row, new_col])
             max_f = cost[new_row][new_col] - _visited[new_row][new_col]
-            result = [new_row, new_col]
 
-    return result
+    # print(max_f)
+    # print(result)
+    # print(_map)
+    if len(result) == 0:
+        return []
+
+    non_prev_positions = [pos for pos in result if pos != [prev_row, prev_col]]
+    if non_prev_positions:
+        return random.choice(non_prev_positions)
+    else: 
+        return random.choice(result)

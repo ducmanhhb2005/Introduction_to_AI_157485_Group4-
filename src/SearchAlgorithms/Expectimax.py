@@ -3,7 +3,6 @@ from Overall.constants import FOOD, MONSTER, EMPTY
 
 _food_pos = []
 
-
 def evaluationFunction(_map, pac_row, pac_col, N, M, score):
     # get food position
     ghost_pos = []
@@ -18,7 +17,7 @@ def evaluationFunction(_map, pac_row, pac_col, N, M, score):
     # Consts
     INF = 100000000.0  # Infinite value
     WEIGHT_FOOD = 5.0  # Food base value
-    WEIGHT_GHOST = -10.0  # Ghost base value
+    WEIGHT_GHOST = -150.0  # Ghost base value
 
     _score = score
     if len(distancesToFoodList) > 0:
@@ -41,10 +40,8 @@ def ExpectAgent(_map, pac_row, pac_col, N, M, depth, Score):
         if _map[_pac_row][_pac_col] == MONSTER or _depth == 0:
             return True
 
-        for row in range(_N):
-            for col in range(_M):
-                if _map[row][col] == FOOD:
-                    return False
+        if len(_food_pos) > 0:
+            return False
 
         return True
 
@@ -80,6 +77,9 @@ def ExpectAgent(_map, pac_row, pac_col, N, M, depth, Score):
 
         pp = 0
 
+        if (agent == len(_ghost)):
+            return _expect(_map, _ghost, _pac_row, _pac_col, _N, _M, _depth - 1, score, -1)
+
         nextAgent = agent + 1
         if nextAgent == len(_ghost):
             nextAgent = -1
@@ -102,7 +102,7 @@ def ExpectAgent(_map, pac_row, pac_col, N, M, depth, Score):
                 _map[_new_r][_new_c] = MONSTER
                 _map[g_r][g_c] = EMPTY
                 _ghost[agent][0], _ghost[agent][1] = _new_r, _new_c
-                v += p * min(v, _expect(_map, _ghost, _pac_row, _pac_col, _N, _M, _depth, score, nextAgent))
+                v += p * _expect(_map, _ghost, _pac_row, _pac_col, _N, _M, _depth, score, nextAgent)
                 _ghost[agent][0], _ghost[agent][1] = g_r, g_c
                 _map[_new_r][_new_c] = state
                 _map[g_r][g_c] = MONSTER
@@ -136,8 +136,6 @@ def ExpectAgent(_map, pac_row, pac_col, N, M, depth, Score):
                 _food_pos.append((new_r, new_c))
             else:
                 Score += 1
-
-    res.sort(key=lambda k: k[1])
     if len(res) > 0:
         return res[-1][0]
     return []

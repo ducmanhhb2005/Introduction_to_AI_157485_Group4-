@@ -7,6 +7,8 @@ LEVEL_TO_ALGORITHM = {
     "LEVEL4": "Minimax"
 }
 
+ALGORITHMS = ["BFS", "DFS", "A*", "Local Search", "Minimax", "AlphaBeta", "Expectimax"]
+
 # DEFINE COLOR
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)

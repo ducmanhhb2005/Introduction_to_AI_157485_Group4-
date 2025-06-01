@@ -80,7 +80,7 @@ class DirectionalGhost:
     def __init__(self):
         self.counter = Counter()
 
-    def move(self, _map, start_row, start_col, pac_row, pac_col, old_direction, N, M):
+    def move(self, _map, start_row, start_col, target_row, target_col, old_direction, N, M):
         proBest = 0.8
         moves = []
 
@@ -91,7 +91,7 @@ class DirectionalGhost:
                 moves.append(key)  
         if not moves:
             return [start_row, start_col]
-        distances = [Manhattan(start_row + Direction[move][0], start_col + Direction[move][1], pac_row, pac_col) for move in moves]
+        distances = [Manhattan(start_row + Direction[move][0], start_col + Direction[move][1], target_row, target_col) for move in moves]
         min_distance = min(distances)
         bestActions = [moves[i] for i in range(len(moves)) if distances[i] == min_distance]
         legal_moves = [moves[i] for i in range(len(moves)) if distances[i] != min_distance]

@@ -10,7 +10,8 @@ from Object.Player import Player
 from Object.Wall import Wall
 from Overall.utils import DDX, isValid2
 from Overall.constants import *
-from Object.Menu import Menu, Button
+from Object.Menu import Menu
+from Object.PacmanButton import PacmanButton
 
 N = M = Score = _state_PacMan = 0
 _map = []
@@ -20,9 +21,11 @@ _food = []
 _ghost = []
 _food_Position = []
 _ghost_Position = []
+_old_direction = []
 _visited = []
 PacMan: Player
 Level = 1
+Algorithm = "BFS"
 Map_name = ""
 
 # Initial Pygame --------------------------
@@ -79,12 +82,9 @@ def check_Object(_map, row, col):
         _ghost.append(Player(row, col, IMAGE_GHOST[len(_ghost) % len(IMAGE_GHOST)]))
         _ghost_Position.append([row, col])
 
-old_direction = []
-for i in range(4):
-    old_direction.append('none')  # Initialize old_direction for each ghost
 
 def initData() -> None:
-    global N, M, _map, _food_Position, _food, _road, _wall, _ghost, _visited, Score, _state_PacMan, _ghost_Position
+    global N, M, _map, _food_Position, _food, _road, _wall, _ghost, _visited, Score, _state_PacMan, _ghost_Position, _old_direction
     N = M = Score = _state_PacMan = 0
     _map = []
     _wall = []
@@ -100,6 +100,9 @@ def initData() -> None:
     for row in range(N):
         for col in range(M):
             check_Object(_map, row, col)
+    
+    for i in range(len(_ghost)):
+        _old_direction.append('none') 
 
 
 def Draw(_screen) -> None:
@@ -137,34 +140,31 @@ def generate_Ghost_new_position(_ghost, _type: int = 0) -> list[list[int]]:
     elif _type == 2:
 
         for idx in range(len(_ghost)):
+            [start_row, start_col] = _ghost[idx].getRC()
+            [end_row, end_col] = PacMan.getRC()
+            
+            # Tạo ghost object dựa trên index
             if idx % 2 == 0:
                 Ghost = RandomGhost()
-                [start_row, start_col] = _ghost[idx].getRC()
-                [end_row, end_col] = PacMan.getRC()
-                [r_r, r_c] = Ghost.move(_map, start_row, start_col, old_direction[idx], N, M)
-                if( [r_r - start_row, r_c - start_col] ) == [0,1]:
-                    old_direction[idx] = 'UP'
-                elif( [r_r - start_row, r_c - start_col] ) == [0,-1]:
-                    old_direction[idx] = 'DOWN' 
-                elif( [r_r - start_row, r_c - start_col] ) == [1,0]:
-                    old_direction[idx] = 'RIGHT'
-                elif( [r_r - start_row, r_c - start_col] ) == [-1,0]:
-                    old_direction[idx] = 'LEFT'
-                _ghost_new_position.append([r_r, r_c])
+                [r_r, r_c] = Ghost.move(_map, start_row, start_col, _old_direction[idx], N, M)
             else:
                 Ghost = DirectionalGhost()
-                [start_row, start_col] = _ghost[idx].getRC()
-                [end_row, end_col] = PacMan.getRC()
-                [r_r, r_c] = Ghost.move(_map, start_row, start_col, end_row, end_col, old_direction[idx], N, M)
-                if( [r_r - start_row, r_c - start_col] ) == [0,1]:
-                    old_direction[idx] = 'UP'
-                elif( [r_r - start_row, r_c - start_col] ) == [0,-1]:
-                    old_direction[idx] = 'DOWN' 
-                elif( [r_r - start_row, r_c - start_col] ) == [1,0]:
-                    old_direction[idx] = 'RIGHT'
-                elif( [r_r - start_row, r_c - start_col] ) == [-1,0]:
-                    old_direction[idx] = 'LEFT'
-                _ghost_new_position.append([r_r, r_c])
+                [r_r, r_c] = Ghost.move(_map, start_row, start_col, end_row, end_col, _old_direction[idx], N, M)
+            
+            # Xác định direction dựa trên sự thay đổi vị trí (logic chung)
+            position_diff = [r_r - start_row, r_c - start_col]
+            
+            if position_diff == [0, 1]:
+                _old_direction[idx] = 'UP'
+            elif position_diff == [0, -1]:
+                _old_direction[idx] = 'DOWN' 
+            elif position_diff == [1, 0]:
+                _old_direction[idx] = 'RIGHT'
+            elif position_diff == [-1, 0]:
+                _old_direction[idx] = 'LEFT'
+            
+            _ghost_new_position.append([r_r, r_c])
+
     return _ghost_new_position
 
 
@@ -202,8 +202,11 @@ def randomPacManNewPos(_map, row, col, _N, _M):
             return [new_r, new_c]
 
 
-def startGame() -> None:
-    global _map, _visited, Score
+def startGame(level, algorithm, map_name, is_test = False):
+    global _map, _visited, Score, Level, Algorithm, Map_name
+    Level = level
+    Algorithm = algorithm
+    Map_name = map_name
     _ghost_new_position = []
     result = []
     new_PacMan_Pos: list = []
@@ -217,6 +220,8 @@ def startGame() -> None:
     status = 0
     delay = 100
 
+    prev_row = 0
+    prev_col = 0
     # ----------------- Run pygame
     while not done:
         for event in pygame.event.get():
@@ -306,32 +311,46 @@ def startGame() -> None:
 
                 if not pac_can_move:
                     continue
-
+                
                 [row, col] = PacMan.getRC()
+                _visited[row][col] += 1
 
                 # cài đặt thuật toán ở đây, thay đổi ALGORITHM trong file constants.py
                 # thuật toán chỉ cần trả về vị trí mới theo format [new_row, new_col] cho biến new_PacMan_Pos
                 # VD: new_PacMan_Pos = [4, 5]
                 # thuật toán sẽ được cài đặt trong folder Algorithms
 
-                search = SearchAgent(_map, _food_Position, row, col, N, M)
-                if Level == 1 or Level == 2:
-                    if len(result) <= 0:
-                        result = search.execute(ALGORITHMS=LEVEL_TO_ALGORITHM["LEVEL1"])
-                        if len(result) > 0:
-                            result.pop(0)
-                            new_PacMan_Pos = result[0]
+                search = SearchAgent(_map, _food_Position, prev_row, prev_col, row, col, N, M)
+                if Algorithm == "BFS" or Algorithm == "DFS":
+                    result = search.execute(Algorithm)
+                    # print(result)
+                    # print(_map)
+                    if len(result) > 1:
+                        new_PacMan_Pos = result[1]
+                    elif prev_row != 0: 
+                        new_PacMan_Pos = [prev_row, prev_col]
 
-                    elif len(result) > 1:
-                        result.pop(0)
-                        new_PacMan_Pos = result[0]
+                elif Algorithm == "Local Search" and len(_food_Position) > 0:
+                    new_PacMan_Pos = search.execute(Algorithm, visited=_visited)
 
-                elif Level == 3 and len(_food_Position) > 0:
-                    new_PacMan_Pos = search.execute(ALGORITHMS=LEVEL_TO_ALGORITHM["LEVEL3"], visited=_visited)
-                    _visited[row][col] += 1
+                elif Algorithm == "Minimax" and len(_food_Position) > 0:
+                    new_PacMan_Pos = search.execute(Algorithm, depth=4, Score=Score)
+                    # print("new_pos")
+                    # print(new_PacMan_Pos)
 
-                elif Level == 4 and len(_food_Position) > 0:
-                    new_PacMan_Pos = search.execute(ALGORITHMS=LEVEL_TO_ALGORITHM["LEVEL4"], depth=4, Score=Score)
+                elif Algorithm == "Expectimax" and len(_food_Position) > 0:
+                    new_PacMan_Pos = search.execute(Algorithm, depth=2, Score=Score)
+                    
+                elif Algorithm == "AlphaBeta" and len(_food_Position) > 0:
+                    new_PacMan_Pos = search.execute(Algorithm, depth=4, Score=Score)
+
+                elif Algorithm == "A*" and len(_food_Position) > 0:
+                    # print("fuck you")
+                    result = search.execute(Algorithm)
+                    if len(result) > 1:
+                        new_PacMan_Pos = result[1]
+                    elif prev_row != 0: 
+                        new_PacMan_Pos = [prev_row, prev_col]
 
                 if len(_food_Position) > 0 and (len(new_PacMan_Pos) == 0 or [row, col] == new_PacMan_Pos):
                     new_PacMan_Pos = randomPacManNewPos(_map, row, col, N, M)
@@ -341,6 +360,9 @@ def startGame() -> None:
                         pac_can_move = False
                         done = True
                         status = -1
+                                
+                prev_row = row
+                prev_col = col
 
         # ------------------------------------------------------
 
@@ -349,7 +371,12 @@ def startGame() -> None:
         pygame.display.flip()
         clock.tick(FPS)
 
-    handleEndGame(status)
+    if is_test == False:
+        handleEndGame(status)
+    else: 
+        if status == -1:
+            return False, Score
+        return True, Score
 
 
 done_2 = False
@@ -371,8 +398,8 @@ def handleEndGame(status: int):
         pygame.quit()
         sys.exit(0)
 
-    btnContinue = Button(WIDTH // 2 - 300, HEIGHT // 2 - 50, 200, 100, screen, "CONTINUE", clickContinue)
-    btnQuit = Button(WIDTH // 2 + 50, HEIGHT // 2 - 50, 200, 100, screen, "QUIT", clickQuit)
+    btnContinue = PacmanButton(WIDTH // 2 - 100, HEIGHT // 2 - 50, 200, 100, screen, "Restart", clickContinue)
+    # btnQuit = PacmanButton(WIDTH // 2 + 50, HEIGHT // 2 - 50, 200, 100, screen, "QUIT", clickQuit)
 
     delay = 100
     while not done_2:
@@ -394,7 +421,7 @@ def handleEndGame(status: int):
             text_surface = my_font_2.render('Your Score: {Score}'.format(Score=Score), False, RED)
             screen.blit(text_surface, (WIDTH // 4 - 65, 10))
 
-        btnQuit.process()
+        # btnQuit.process()
         btnContinue.process()
 
         pygame.display.flip()
@@ -405,9 +432,8 @@ def handleEndGame(status: int):
 
 def showMenu():
     _menu = Menu(screen)
-    global Level, Map_name
-    [Level, Map_name] = _menu.run()
-    startGame()
+    [level, algorithm, map_name] = _menu.run()
+    startGame(level, algorithm, map_name)
 
 
 if __name__ == '__main__':

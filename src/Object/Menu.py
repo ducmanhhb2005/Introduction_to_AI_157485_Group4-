@@ -2,9 +2,9 @@ import os
 
 import pygame
 import sys
+from Object.PacmanButton import PacmanButton
 
-from Overall.constants import FPS, WIDTH, HEIGHT, BLUE, BLACK, WALL, FOOD, WHITE, YELLOW, MONSTER, IMAGE_GHOST, \
-    IMAGE_PACMAN
+from Overall.constants import *
 
 clock = pygame.time.Clock()
 bg = pygame.image.load("Images/home_bg.png")
@@ -64,22 +64,49 @@ class Menu:
         self.done = False
         self.current_screen = 1
         self.screen = screen
-        self.btnStart = Button(WIDTH // 2 - 100 + 5, HEIGHT - 170, 200, 100, screen, "Start", self.myFunction)
+        self.btnStart = PacmanButton(WIDTH // 2 - 80, HEIGHT // 2, 150, 100, screen, "START", self.startGame)
 
-        self.btnLevel1 = Button(WIDTH // 2 - 150, HEIGHT // 4 * 0 + 20, 300, 100, screen, "Level 1",
+        self.btnLevel1 = PacmanButton(WIDTH // 2 - 150, HEIGHT // 4 * 0 + 20, 300, 100, screen, "Level 1",
                                 self._load_map_level_1)
-        self.btnLevel2 = Button(WIDTH // 2 - 150, HEIGHT // 4 * 1 + 20, 300, 100, screen, "Level 2",
+        self.btnLevel2 = PacmanButton(WIDTH // 2 - 150, HEIGHT // 4 * 1 + 20, 300, 100, screen, "Level 2",
                                 self._load_map_level_2)
-        self.btnLevel3 = Button(WIDTH // 2 - 150, HEIGHT // 4 * 2 + 20, 300, 100, screen, "Level 3",
+        self.btnLevel3 = PacmanButton(WIDTH // 2 - 150, HEIGHT // 4 * 2 + 20, 300, 100, screen, "Level 3",
                                 self._load_map_level_3)
-        self.btnLevel4 = Button(WIDTH // 2 - 150, HEIGHT // 4 * 3 + 20, 300, 100, screen, "Level 4",
+        self.btnLevel4 = PacmanButton(WIDTH // 2 - 150, HEIGHT // 4 * 3 + 20, 300, 100, screen, "Level 4",
                                 self._load_map_level_4)
 
-        self.btnPrev = Button(WIDTH // 2 - 250, HEIGHT // 4 * 3 + 35, 100, 100, screen, "<", self.prevMap)
-        self.btnNext = Button(WIDTH // 2 + 150, HEIGHT // 4 * 3 + 35, 100, 100, screen, ">", self.nextMap)
-        self.btnPlay = Button(WIDTH // 2 - 75, HEIGHT // 4 * 3 + 35, 150, 100, screen, "PLAY", self.selectMap)
+        self.btnPrev = PacmanButton(WIDTH // 2 - 250, HEIGHT // 4 * 3 + 35, 100, 100, screen, "<", self.prevMap)
+        self.btnNext = PacmanButton(WIDTH // 2 + 150, HEIGHT // 4 * 3 + 35, 100, 100, screen, ">", self.nextMap)
+        self.btnConfirmMap = PacmanButton(WIDTH // 2 - 75, HEIGHT // 4 * 3 + 35, 150, 100, screen, "CONFIRM", self.selectMap)
 
-        self.btnBack = Button(40, HEIGHT // 4 * 3 + 35, 150, 100, screen, "BACK", self.myFunction)
+        # self.btnBack = PacmanButton(40, HEIGHT // 4 * 3 + 35, 150, 100, screen, "BACK", self.myFunction)
+
+        # thuật toán support
+        self.algorithms      = ALGORITHMS
+        self.sel_algo_idx    = 0
+        self.algorithm_name  = None
+
+        # nút sang trái/phải và xác nhận cho màn chọn thuật toán
+        # bạn đặt sao cho hợp layout của bạn
+        self.btnPrevAlgo     = PacmanButton( WIDTH//2 - 180, HEIGHT//2,  100, 80, screen, "<", self.prevAlgo )
+        self.btnNextAlgo     = PacmanButton( WIDTH//2 +  80, HEIGHT//2,  100, 80, screen, ">", self.nextAlgo )
+        self.btnConfirmAlgo  = PacmanButton( WIDTH//2 - 70,  HEIGHT//2 - 35, 150, 80, screen, "Play", self.confirmAlgo )
+
+    def prevAlgo(self):
+        if self.clicked:
+            self.sel_algo_idx = (self.sel_algo_idx - 1) % len(self.algorithms)
+        self.clicked = False
+
+    def nextAlgo(self):
+        if self.clicked:
+            self.sel_algo_idx = (self.sel_algo_idx + 1) % len(self.algorithms)
+        self.clicked = False
+
+    def confirmAlgo(self):
+        if self.clicked:
+            self.algorithm_name = self.algorithms[self.sel_algo_idx]
+            self.done = True
+        self.clicked = False
 
     def nextMap(self):
         if self.clicked:
@@ -95,11 +122,13 @@ class Menu:
                 self.current_map += len(self.map_name)
         self.clicked = False
 
-    def myFunction(self):
+    def startGame(self):
         self.current_screen = 2
         self.map_name = []
         self.current_map = 0
         self.current_level = 0
+        self.sel_algo_idx = 0
+        self.algorithm_name = None
 
     def _load_map_level_1(self):
         if self.clicked:
@@ -185,7 +214,9 @@ class Menu:
 
     def selectMap(self):
         if self.clicked:
-            self.done = True
+            # thay vì self.done = True, ta chuyển qua màn 5
+            self.current_screen = 5
+        self.clicked = False
 
     def run(self):
 
@@ -217,10 +248,23 @@ class Menu:
             elif self.current_screen == 4:
                 self.btnNext.process()
                 self.btnPrev.process()
-                self.btnPlay.process()
-                self.btnBack.process()
+                self.btnConfirmMap.process()
+                # self.btnBack.process()
+            elif self.current_screen == 5:
+                self.screen.fill(BLACK)
+                # tiêu đề
+                lbl = my_font.render(f"SELECT ALGORITHM: {self.algorithms[self.sel_algo_idx]}", True, WHITE)
+                self.screen.blit(lbl, (WIDTH//2 - lbl.get_width()//2, HEIGHT//2 - 100))
+
+                self.btnPrevAlgo.process()
+                self.btnNextAlgo.process()
+                self.btnConfirmAlgo.process()
+                # cho phép quay lại nếu cần
+                # self.btnBack.process()
 
             pygame.display.flip()
             clock.tick(FPS)
+        
+        print(self.current_level, self.algorithm_name, self.map_name[self.current_map]);
 
-        return [self.current_level, self.map_name[self.current_map]]
+        return [self.current_level, self.algorithm_name, self.map_name[self.current_map]]

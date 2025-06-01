@@ -1,8 +1,8 @@
 from Overall.utils import Manhattan, DDX, isValid2, isValid
 from Overall.constants import FOOD, MONSTER, EMPTY
+import random
 
 _food_pos = []
-
 
 def evaluationFunction(_map, pac_row, pac_col, N, M, score):
     # get food position
@@ -38,7 +38,7 @@ def evaluationFunction(_map, pac_row, pac_col, N, M, score):
     return _score
 
 
-def minimaxAgent(_map, pac_row, pac_col, N, M, depth, Score):
+def minimaxAgent(_map, prev_row, prev_col, pac_row, pac_col, N, M, depth, Score):
     def terminal(_map, _pac_row, _pac_col, _N, _M, _depth) -> bool:
         if _map[_pac_row][_pac_col] == MONSTER or _depth == 0:
             return True
@@ -55,9 +55,12 @@ def minimaxAgent(_map, pac_row, pac_col, N, M, depth, Score):
             return evaluationFunction(_map, _pac_row, _pac_col, _N, _M, score)
 
         v = 10000000000000000
+        ghost_count = 0
+
         for row in range(_N):
             for col in range(_M):
                 if _map[row][col] == MONSTER:
+                    ghost_count += 1
                     for [_d_r, _d_c] in DDX:
                         _new_r, _new_c = _d_r + row, _d_c + col
                         if isValid2(_map, _new_r, _new_c, _N, _M):
@@ -67,6 +70,10 @@ def minimaxAgent(_map, pac_row, pac_col, N, M, depth, Score):
                             v = min(v, max_value(_map, _pac_row, _pac_col, _N, _M, _depth - 1, score))
                             _map[_new_r][_new_c] = state
                             _map[row][col] = MONSTER
+
+        if ghost_count == 0:
+            return max_value(_map, _pac_row, _pac_col, _N, _M, _depth, score)
+        
         return v
 
     def max_value(_map, _pac_row, _pac_col, _N, _M, _depth, score):
@@ -120,6 +127,27 @@ def minimaxAgent(_map, pac_row, pac_col, N, M, depth, Score):
                 Score += 1
 
     res.sort(key=lambda k: k[1])
+    # if len(res) > 0:
+    #     return res[-1][0]
+    # print(pac_row)
+    # print(pac_col)
+    # print(prev_row)
+    # print(prev_col)
+    # print(res)
     if len(res) > 0:
-        return res[-1][0]
+        # Lấy giá trị tốt nhất
+        best_value = res[-1][1]
+        
+        # Lấy tất cả các lựa chọn có giá trị tốt nhất
+        best_choices = [move for move, value in res if value == best_value]
+        
+        # Tránh vị trí trước đó nếu có thể
+        non_prev_choices = [choice for choice in best_choices if choice != [prev_row, prev_col]]
+        print(non_prev_choices)
+        if non_prev_choices:
+            return random.choice(non_prev_choices)
+        else:
+            # Nếu tất cả đều là vị trí trước, chọn random từ tất cả
+            return random.choice(best_choices)
+    
     return []
