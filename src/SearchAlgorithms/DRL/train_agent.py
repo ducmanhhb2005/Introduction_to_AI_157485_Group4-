@@ -181,7 +181,7 @@ def train():
             if loss is not None:
                 current_episode_total_loss += loss
                 num_learn_calls_this_episode += 1
-
+            
             if should_render_this_run and screen:
                 env.render(mode='pygame')
                 pygame.display.flip()

@@ -123,6 +123,14 @@ class PacmanEnv:
     def _calculate_state_dim(self): return self.N * self.M
     @property
     def observation_space_dim(self): return self._state_dim
+
+    # gamestate là một mảng 1D với kích thước N*M, mỗi ô có giá trị:
+    # -2: Tường (WALL)
+    # -1.5: Pacman và Ghost cùng ở ô đó
+    # -1: Ghost ở ô đó
+    # 0.5: Food ở ô đó
+    # 1: Pacman ở ô đó
+    # 0: Ô trống (EMPTY)
     def _get_state(self):
         state = np.zeros(self.N * self.M, dtype=np.float32)
         for r in range(self.N):
@@ -139,29 +147,37 @@ class PacmanEnv:
                 elif is_food_here: state[map_1d_idx] = 0.5
                 else: state[map_1d_idx] = 0.0
         return state.flatten()
+    
     def reset(self): self._initialize_game_internals(); return self._get_state()
     def _is_valid_position(self, r, c): return 0 <= r < self.N and 0 <= c < self.M and self._map_data[r][c] != WALL
+    
     def step(self, action):
         self.current_step += 1; reward = -0.1; done = False
         d_row, d_col = self.ACTION_MAP[action]
         next_pac_r, next_pac_c = self.pacman.row + d_row, self.pacman.col + d_col
+
         if self._is_valid_position(next_pac_r, next_pac_c): self.pacman.setRC(next_pac_r, next_pac_c)
         for ghost in self.ghosts:
             valid_moves = []
             for dr_g, dc_g in self.ACTION_MAP.values():
                 if self._is_valid_position(ghost.row + dr_g, ghost.col + dc_g): valid_moves.append((ghost.row + dr_g, ghost.col + dc_g))
             if valid_moves: ghost.setRC(*random.choice(valid_moves))
+
         for i in range(len(self.foods)-1,-1,-1):
             if self.pacman.row==self.foods[i].row and self.pacman.col==self.foods[i].col:
                 self.score+=10; reward+=10.0; self.foods.pop(i); break
+            
         info_status = "playing"
         for ghost in self.ghosts:
             if self.pacman.row==ghost.row and self.pacman.col==ghost.col:
                 self.score-=500; reward-=500.0; done=True; info_status="lost"; break
+            
         if not done:
             if not self.foods: self.score+=200; reward+=200.0; done=True; info_status="won"
             elif self.current_step >= self.max_steps_per_episode: done=True; info_status="max_steps_reached"
+        
         return self._get_state(), reward, done, {"score":self.score, "steps":self.current_step, "status":info_status}
+    
     def render(self, mode='text'):
         if mode == 'pygame' and self.screen_surface:
             self.screen_surface.fill(BLACK)

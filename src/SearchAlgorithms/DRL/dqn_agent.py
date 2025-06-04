@@ -40,6 +40,7 @@ class DQNAgent:
             batch_size (int): Kích thước batch khi lấy mẫu từ buffer.
             target_update_freq (int): Số lần gọi `learn()` trước khi cập nhật Target Network.
         """
+        
         self.state_dim = state_dim
         self.action_dim = action_dim
         self.gamma = gamma
