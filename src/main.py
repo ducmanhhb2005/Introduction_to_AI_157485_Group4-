@@ -202,7 +202,7 @@ def randomPacManNewPos(_map, row, col, _N, _M):
             return [new_r, new_c]
 
 
-def startGame(level, algorithm, map_name, is_test = False):
+def startGame(level, algorithm, map_name, is_test = False, is_render = True):
     global _map, _visited, Score, Level, Algorithm, Map_name
     Level = level
     Algorithm = algorithm
@@ -339,7 +339,7 @@ def startGame(level, algorithm, map_name, is_test = False):
                     # print(new_PacMan_Pos)
 
                 elif Algorithm == "Expectimax" and len(_food_Position) > 0:
-                    new_PacMan_Pos = search.execute(Algorithm, depth=2, Score=Score)
+                    new_PacMan_Pos = search.execute(Algorithm, depth=1, Score=Score)
                     
                 elif Algorithm == "AlphaBeta" and len(_food_Position) > 0:
                     new_PacMan_Pos = search.execute(Algorithm, depth=4, Score=Score)
@@ -365,11 +365,11 @@ def startGame(level, algorithm, map_name, is_test = False):
                 prev_col = col
 
         # ------------------------------------------------------
-
-        screen.fill(BLACK)
-        Draw(screen)
-        pygame.display.flip()
-        clock.tick(FPS)
+        if (is_render):
+            screen.fill(BLACK)
+            Draw(screen)
+            pygame.display.flip()
+            clock.tick(FPS)
 
     if is_test == False:
         handleEndGame(status)

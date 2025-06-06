@@ -19,7 +19,7 @@ def benchmark(level, algorithms, map_name, runs):
         wins = 0
         t0 = time.perf_counter()
         for _ in range(runs):
-            win, score = startGame(level = level, algorithm=alg, map_name=map_name, is_test = True)
+            win, score = startGame(level = level, algorithm=alg, map_name=map_name, is_test = True, is_render = False)
             if win:
                 wins += 1
             print(f"{win}, score: {score}")
@@ -31,9 +31,9 @@ def benchmark(level, algorithms, map_name, runs):
 
 if __name__ == "__main__":
     level = 1
-    algorithms = ["A*", "BFS", "DFS", "Local Search", "Minimax", "Expectimax"]
+    algorithms = ["Expectimax"]
     map_name   = "../InputMap/Level4/map6.txt"
-    runs       = 3
+    runs       = 50
 
     results = benchmark(level, algorithms, map_name, runs)
     print("\n=== Summary ===")

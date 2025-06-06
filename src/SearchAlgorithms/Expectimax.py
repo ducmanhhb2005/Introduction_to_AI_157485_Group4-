@@ -1,22 +1,17 @@
-from Overall.utils import Manhattan, DDX, isValid, isValid2
+from Overall.utils import Manhattan, DDX, isValid, isValid2, compute_all_pairs_shortest_paths
 from Overall.constants import FOOD, MONSTER, EMPTY
 
 _food_pos = []
 
-def evaluationFunction(_map, pac_row, pac_col, N, M, score):
+def evaluationFunction(_map, _ghost, pac_row, pac_col, N, M, score):
     # get food position
-    ghost_pos = []
     distancesToFoodList = []
-    for row in range(N):
-        for col in range(M):
-            if _map[row][col] == FOOD:
-                distancesToFoodList.append(Manhattan(row, col, pac_row, pac_col))
-            if _map[row][col] == MONSTER:
-                ghost_pos.append([row, col])
+    for (row, col) in _food_pos:
+        distancesToFoodList.append(all_distance[(row, col), (pac_row, pac_col)])
 
     # Consts
     INF = 100000000.0  # Infinite value
-    WEIGHT_FOOD = 5.0  # Food base value
+    WEIGHT_FOOD = 20.0  # Food base value
     WEIGHT_GHOST = -150.0  # Ghost base value
 
     _score = score
@@ -25,8 +20,8 @@ def evaluationFunction(_map, pac_row, pac_col, N, M, score):
     else:
         _score += WEIGHT_FOOD
 
-    for [g_r, g_c] in ghost_pos:
-        distance = Manhattan(pac_row, pac_col, g_r, g_c)
+    for [g_r, g_c] in _ghost:
+        distance = all_distance[(pac_row, pac_col), (g_r, g_c)]
         if distance > 0:
             _score += WEIGHT_GHOST / distance
         else:
@@ -47,7 +42,7 @@ def ExpectAgent(_map, pac_row, pac_col, N, M, depth, Score):
 
     def _expect(_map, _ghost, _pac_row, _pac_col, _N, _M, _depth, score, agent):
         if terminal(_map, _pac_row, _pac_col, _N, _M, _depth):
-            return evaluationFunction(_map, _pac_row, _pac_col, _N, _M, score)
+            return evaluationFunction(_map, _ghost, _pac_row, _pac_col, _N, _M, score)
 
         if agent == -1:
             v = float("-inf")
@@ -108,6 +103,9 @@ def ExpectAgent(_map, pac_row, pac_col, N, M, depth, Score):
                 _map[g_r][g_c] = MONSTER
         return v
 
+    global all_distance
+    all_distance = compute_all_pairs_shortest_paths(_map, N, M)
+
     res = []
     global _food_pos
     _food_pos = []
@@ -136,6 +134,8 @@ def ExpectAgent(_map, pac_row, pac_col, N, M, depth, Score):
                 _food_pos.append((new_r, new_c))
             else:
                 Score += 1
+    
+    res.sort(key=lambda k: k[1])
     if len(res) > 0:
         return res[-1][0]
     return []

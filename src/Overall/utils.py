@@ -1,3 +1,4 @@
+from collections import deque
 from Overall.constants import FOOD, EMPTY, WALL
 
 DDX = [[0, 1], [0, -1], [1, 0], [-1, 0]]
@@ -28,6 +29,36 @@ def find_nearest_food(_food_Position: list[list[int]], start_row: int, start_col
             [food_row, food_col] = _food_Position[idx]
 
     return [food_row, food_col, _id]
+
+def compute_all_pairs_shortest_paths(_map, N, M):
+    """
+    Returns a dictionary with keys ((row1, col1), (row2, col2)) and values as the shortest path distance between them.
+    Only considers positions that are not WALL.
+    """
+    def bfs(start_row, start_col):
+        distances = {}
+        visited = [[False for _ in range(M)] for _ in range(N)]
+        queue = deque()
+        queue.append((start_row, start_col, 0))
+        visited[start_row][start_col] = True
+        while queue:
+            row, col, dist = queue.popleft()
+            distances[(row, col)] = dist
+            for dr, dc in DDX:
+                nr, nc = row + dr, col + dc
+                if 0 <= nr < N and 0 <= nc < M and not visited[nr][nc] and _map[nr][nc] != WALL:
+                    visited[nr][nc] = True
+                    queue.append((nr, nc, dist + 1))
+        return distances
+
+    all_distances = {}
+    for row in range(N):
+        for col in range(M):
+            if _map[row][col] != WALL:
+                dists = bfs(row, col)
+                for pos, dist in dists.items():
+                    all_distances[((row, col), pos)] = dist
+    return all_distances
 
 class Counter(dict):
     def normalize(self):
