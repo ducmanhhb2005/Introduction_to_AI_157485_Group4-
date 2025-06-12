@@ -6,7 +6,7 @@ LEVEL_TO_ALGORITHM = {
     "LEVEL3": "Local Search",
     "LEVEL4": "Minimax"
 }
-
+ALGORITHMS = ["BFS", "DFS", "Local Search", "Minimax", "AlphaBeta", "Expectimax"]
 # DEFINE COLOR
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -18,10 +18,10 @@ YELLOW = (255, 255, 0)
 ORANGE = (255, 165, 0)
 
 # DEFINE MAP
-SIZE_WALL: int = 30
-DEFINE_WIDTH: int = 6
-BLOCK_SIZE: int = SIZE_WALL // 2
-
+SIZE_WALL: int = 30   #Kích thước 1 ô
+DEFINE_WIDTH: int = 6   #Độ dày của viền tường
+BLOCK_SIZE: int = SIZE_WALL // 2 #Lấy phần nguyên   #Kích thước 1 viên thức ăn
+NUM_GHOSTS_FOR_STATE = 4
 # Entity
 EMPTY = 0
 WALL = 1
@@ -33,7 +33,7 @@ WIDTH: int = 1200
 HEIGHT: int = 600
 FPS: int = 300
 
-MARGIN = {
+MARGIN = { #lề trên và lề trái để hiển thị bản đồ game
     "TOP": 0,
     "LEFT": 0
 }
